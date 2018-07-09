@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		<title>史蒂夫18服务器配置监控</title>
+		<link rel="stylesheet" href="layui/css/layui.css">
+		<script type="text/javascript" src="js/jquery-1.8.0.min.js"></script>
+		<style>
+			pre {
+				outline: 1px solid #ccc;
+				padding: 5px;
+				margin: 5px;
+				/*display: none*/;
+			}
+			
+			.string {
+				color: green;
+			}
+			
+			.number {
+				color: darkorange;
+			}
+			
+			.boolean {
+				color: blue;
+			}
+			
+			.null {
+				color: magenta;
+			}
+			
+			.key {
+				color: red;
+			}
+			
+			[v-cloak] {
+				display: none;
+			}
+		</style>
+	</head>
+
+	<body class="layui-layout-body">
+		<div class="layui-layout layui-layout-admin" id="app-4">
+			<div class="layui-header">
+				<div class="layui-logo" style="font-size: 20px;" >游戏服务器(18)</div>
+				<!-- 头部区域（可配合layui已有的水平导航） -->
+				<ul class="layui-nav layui-layout-left"></ul>
+				<ul class="layui-nav layui-layout-right"></ul>
+			</div>
+
+			<div class="layui-side layui-bg-black">
+				<div class="layui-side-scroll">
+					<!-- 左侧导航区域（可配合layui已有的垂直导航） -->
+					<ul class="layui-nav layui-nav-tree" lay-filter="test">
+
+						<li v-for="(value, key) in serverTree" class="layui-nav-item " v-cloak>
+							<!--layui-nav-itemed-->
+							<a class="" href="javascript:;">{{key | cityKv }} </a>
+							<dl class="layui-nav-child">
+								<dd v-for="val in value">
+									<a href="javascript:;" @click="clickeTree(key,val)" >{{val | cityKv}}</a>
+								</dd>
+							</dl>
+						</li>
+
+					</ul>
+				</div>
+			</div>
+			<template v-if="sconfig.productId!=''" >
+			<div class="layui-body">
+				<div class="layui-tab layui-tab-card">
+					<ul class="layui-tab-title">
+						<li class="layui-this" @click="onMainGameConfig" id="main-tab">主游戏信息</li>
+						<li @click="onMainDataConfig">主游戏数据库信息</li>
+						<li @click="onClickActivity">活动服配置信息</li>
+						<li @click="onClickClub">俱乐部配置信息</li>
+						<li @click="onshoppingApi" >支付服配置信息</li>
+						<li @click="onClickPhp">PHP服配置信息</li>
+					</ul>
+					
+					<div class="layui-tab-content" style="height: 100px;">
+						<!--game Main-->
+						<div class="layui-tab-item layui-show"  >
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">主游戏状态信息</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+
+								<tbody>
+									<tr>
+										<td><b>服务器名称</b></td>
+										<td>{{serverName | cityKv}}</td>
+									</tr>
+									<tr>
+										<td><b>productId</b></td>
+										<td>{{sconfig.productId}}</td>
+									</tr>
+									<tr>
+										<td><b>服务器IP</b></td>
+										<td>120.78.199.18</td>
+									</tr>
+									<tr>
+										<td><b>运行状态</b></td>
+										<td><span style="color: green;" v-if="pid!=''">正常 </span>
+											<span style="color: red;" v-else>关闭</span>
+											<!--<span style="color: red;" >异常</span> <span style="color: black;" >关闭</span>-->
+											<span v-if="pid!=''" >(pid={{pid}})</span>
+										</td>
+									</tr>
+									<tr>
+										<td><b>操作</b></td>
+										<td>
+											<button class="layui-btn layui-btn-sm " @click="onOutlog">查看日志</button>
+											<button class="layui-btn layui-btn-sm " @click="onErrorlog">查看异常日志</button>
+											<button class="layui-btn layui-btn-sm layui-btn-normal" @click="onRestart" >重启</button>
+											<button class="layui-btn layui-btn-sm layui-btn-danger" @click="onStop">关闭</button>
+										</td>
+									</tr>
+									<tr>
+										<td><b>查看版本信息</b></td>
+										<td><button class="layui-btn layui-btn-sm layui-btn-primary" @click="onVersion" ><i class="layui-icon" style="font-size: 100px; color: green;">&#xe705;</i></button></td>
+									</tr>
+								</tbody>
+							</table>
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">主游戏配置信息</legend>
+							</fieldset>
+							<!--<template v-if="sconfig.productId!=''" >-->
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+
+								<tbody>
+									<tr>
+										<td><b>gamePort(游戏端口)</b></td>
+										<td>{{sconfig.gamePort}}</td>
+									</tr>
+									<tr>
+										<td><b>resPort(资源端口)</b></td>
+										<td>{{sconfig.resPort}}</td>
+									</tr>
+									<tr>
+										<td><b>webPort(web端口)</b></td>
+										<td>{{sconfig.webPort}}</td>
+									</tr>
+									<tr>
+										<td><b>Redis端口</b></td>
+										<td>{{sconfig.cacheConfig.port}}</td>
+									</tr>
+									<tr>
+										<td><b>APPID</b></td>
+										<td>{{sconfig.appid}}</td>
+									</tr>
+									<tr>
+										<td><b>活动服务器地址</b></td>
+										<td>{{sconfig.activityURL}}</td>
+									</tr>
+									<tr>
+										<td><b>支付服务器地址</b></td>
+										<td>{{sconfig.shoppingCenterURL}}</td>
+									</tr>
+									<tr>
+										<td><b>是否开启分布式</b></td>
+										<td>{{sconfig.simpleProxy}}</td>
+									</tr>
+									<tr>
+										<td><b>集群是否开启</b></td>
+										<td>{{sconfig.singlon}}</td>
+									</tr>
+									<tr>
+										<td><b>玩家前缀</b></td>
+										<td>{{sconfig.userIdPrefix}}</td>
+									</tr>
+									<tr>
+										<td><b>公共库数据库名称</b></td>
+										<td>{{sconfig.dbConfigMap.dictDataBaseConfig.dbNames.dictDbName}}</td>
+									</tr>
+									<tr>
+										<td><b>游戏主库</b></td>
+										<td>{{sconfig.dbConfigMap.dataBaseConfig.dbNames.dbName}}</td>
+									</tr>
+									<tr>
+										<td><b>游戏地日志库</b></td>
+										<td>{{sconfig.dbConfigMap.logDataBaseConfig.dbNames.logDbName}}</td>
+									</tr>
+									<tr>
+										<td><b>game_server路径</b></td>
+										<td>/data/game/{{thisList}}current/game_server/Deploydir/dsqp</td>
+									</tr>
+									<tr>
+										<td><b>gateway_server路径</b></td>
+										<td>/data/game/{{thisList}}current/gateway_server/Deploydir/dsqp</td>
+									</tr>
+									<tr>
+										<td><b>资源服地址</b></td>
+										<td>{{sconfig.resConfig.recordURL}}</td>
+									</tr>
+									<tr>
+										<td><b>洗牌次数</b></td>
+										<td>{{sconfig.cardControlConfig.n}}</td>
+									</tr>
+								</tbody>
+							</table>
+							<!-- layui 2.2.5 新增 -->
+							<button class="layui-btn layui-btn-fluid" v-on:click="Sysinfo" >加载详细配置</button>
+							<pre id="result" v-show="isconfigshow" >
+							</pre>
+
+						</div>
+						<!-- main db config   -->
+						<div class="layui-tab-item" >
+									<div class="layui-form">
+											<!--<a>name_dict_activity</a>-->
+											<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+												<legend style="font-size: 18px;">公共活动库</legend>
+											</fieldset>
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<td>id</td>
+														<td>productId</td>
+														<td>活动标题</td>
+														<td>系统类型
+															<my-question post-title="(100活动,200邀请好友)"></my-question>
+														</td>
+														<td>活动内容
+															<my-question post-title="(内容类型为1时保存文本，为2保存图片url)"></my-question>
+														</td>
+														<td>图片链接</td>
+														<td>界面排序</td>
+														<td>分享内容</td>
+														<td>活动开始时间</td>
+														<td>活动结束时间</td>
+														<td>内容类型
+															<my-question post-title="(1文字内容，2图片内容)"></my-question>
+														</td>
+														<!--<td>活动大众预留字段</td>-->
+														<td>消失时间</td>
+														<td>活动状态
+															<my-question post-title="(1开放0关闭)"></my-question>
+														</td>
+
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="v in data_dict_activity">
+														<td>{{v.id}}</td>
+														<td>{{v.gameId}}</td>
+														<td>{{v.title}}</td>
+														<td>{{v.type}}</td>
+														<td>{{v.content}}</td>
+														<td>{{v.url}}</td>
+														<td>{{v.ui}}</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.share)">
+																 详情
+															</button></td>
+														<td>{{v.startTime}}</td>
+														<td>{{v.endTime}}</td>
+														<td>{{v.contentType}}</td>
+														<!--<td>{{v.user}}</td>-->
+														<td>{{v.vanishTime}}</td>
+														<td>{{v.status}}</td>
+													</tr>
+
+												</tbody>
+											</table>
+										</div>
+
+										<div class="layui-form">
+											<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+												<legend style="font-size: 18px;">公共库配置</legend>
+											</fieldset>
+											<!--<a>name_dict_config</a>-->
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<!--<td v-for="v in name_dict_config"><b>{{v}}</b></td>-->
+														<td>productId</td>
+														<td>参数</td>
+														<td>值</td>
+														<td>备注</td>
+														<td>是否开启<my-question post-title="(1开放0关闭)"></my-question></td>
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="v in data_dict_config">
+														<td>{{v.productId}}</td>
+														<td>{{v.sKey}}</td>
+														<td>{{v.sValue}}</td>
+														<td>{{v.sDesc}}</td>
+														<td>{{v.isValid}}</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+
+										<div class="layui-form">
+											<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+												<legend style="font-size: 18px;">省市级配置</legend>
+											</fieldset>
+											<!--<a>name_dict_place</a>-->
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<!--<td v-for="v in name_dict_place"><b>{{v}}</b></td>-->
+														<td>productId</td>
+														<td>父地方ID</td>
+														<td>地方名</td>
+														<td>地方级别</td>
+														<td>用于标识唯一游戏的ID</td>
+														<td>是否显示<my-question post-title="(0为不显示，非0为显示)"></my-question></td>
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="v in data_dict_place">
+														<td>{{v.placeId}}</td>
+														<td>{{v.firstId}}</td>
+														<td>{{v.placeName}}</td>
+														<td>{{v.placeLevel}}</td>
+														<td>{{v.parentPlaceId}}</td>
+														<td>{{v.ui}}</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+
+										<div class="layui-form">
+											<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+												<legend style="font-size: 18px;">地区具体配置</legend>
+											</fieldset>
+											<!--<a>name_dict_place_config</a>-->
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<!--<td v-for="v in name_dict_place_config"><b>{{v}}</b></td>-->
+														<td>productId</td>
+														<td>充值提示</td>
+														<td>广告</td>
+														<td>招募配置</td>
+														<td>每日分享</td>
+														<td>俱乐部分享</td>
+														<td>邀请好友分享</td>
+														<td>跑马灯</td>
+														<td>弹出广告</td>
+														<td>弹出广告开关<my-question post-title="(1开放0关闭)"></my-question></td>
+														<td>任务奖励<my-question post-title="任务奖励（type：sum|type：sum 的格式）"></my-question></td>
+														<!--<td>awardList任务奖励（1：sum|2：sum 的格式）</td>-->
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="v in data_dict_place_config">
+														<td>{{v.placeId}}</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.pyjRechargeTips)">
+																 详情
+															</button>
+														</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.pyjAdvertisementUrLs)">
+																 详情
+															</button>
+														</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.recruitSetting)">
+																 详情
+															</button>
+														</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.dailyShare)">
+																 详情
+															</button>
+														</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.clubShare)">
+																 详情
+															</button>
+														</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.inviteShare)">
+																 详情
+															</button>
+														</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.marqueenTipMap)">
+																 详情
+															</button>
+														</td>
+														<td>
+														<button class="layui-btn" data-type="auto" @click="particularsShow(v.popupAdUrLs)">
+																 详情
+															</button>
+														</td>
+														<td>{{v.popupAdEnable}}</td>
+														<td>{{v.awardList}}</td>
+														
+													</tr>
+
+												</tbody>
+											</table>
+										</div>
+
+									<!--	<div class="layui-form">
+											<a>name_dict_place_convert</a>
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<td v-for="v in name_dict_place_convert"><b>{{v}}</b></td>
+														<td>firstID</td>
+														<td>oldPlaceID</td>
+														<td>newPlaceID</td>
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="v in data_dict_place_convert">
+														<td>{{v.firstID}}</td>
+														<td>{{v.oldPlaceID}}</td>
+														<td>{{v.newPlaceID}}</td>
+													</tr>
+
+												</tbody>
+											</table>
+										</div>-->
+
+										<div class="layui-form">
+											<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+												<legend style="font-size: 18px;">地区玩法配置</legend>
+											</fieldset>
+											<!--<a>name_dict_place_game</a>-->
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<!--<td v-for="v in name_dict_place_game"><b>{{v}}</b></td>-->
+														<td>productId</td>
+														<td>gameId</td>
+														<td>游戏名称</td>
+														<td>描述</td>
+														<td>玩家数量</td>
+														<!--<td>roomFeeType</td>-->
+														<td>是否需要房费</td>
+														<td>初始分</td>
+														<td>房费配置</td>
+														<td>底分</td>
+														<td>房间配置</td>
+														<td>局数</td>
+														<td>投票解散时间</td>
+														<td>玩法</td>
+														<td>翻马</td>
+														<!--<td>expiredTime</td>-->
+														<!--<td>voteCdSecond</td>-->
+														<td>房间分享</td>
+														<!--<td>wanfahuchi</td>-->
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="v in data_dict_place_game">
+														<td>{{v.placeId}}</td>
+														<td>{{v.gameId}}</td>
+														<td>{{v.gameName}}</td>
+														<td>{{v.description}}</td>
+														<td>{{v.playerSum}}</td>
+														<!--<td>{{v.roomFeeType}}</td>-->
+														<td>{{v.isNeedRoomFee}}</td>
+														<td>{{v.initScore}}</td>
+														
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.roomFee)">
+																 详情
+															</button>
+														</td>
+														<td>{{v.difen}}</td>
+														<td>{{v.roomFeeSum}}</td>
+														
+														<td>{{v.roundSum}}</td>
+														<td>{{v.voteWaitTime}}</td>
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.wanfa)">
+																 详情
+															</button>
+														</td>
+														<td>{{v.fanma}}</td>
+														<!--<td>{{v.expiredTime}}</td>-->
+														<!--<td>{{v.voteCdSecond}}</td>-->
+														<td>
+															<button class="layui-btn" data-type="auto" @click="particularsShow(v.roomShare)">
+																 详情
+															</button>
+														</td>
+														<!--<td>{{v.wanfahuchi}}</td>-->
+													</tr>
+												</tbody>
+											</table>
+										</div>
+
+										<div class="layui-form">
+											<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+												<legend style="font-size: 18px;">ISO版本配置</legend>
+											</fieldset>
+											<!--<a>name_dict_place_version</a>-->
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<!--<td v-for="v in name_dict_place_version"><b>{{v}}</b></td>-->
+														<td>productId</td>
+														<td>version</td>
+														<td>reviewVersion</td>
+														
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="v in data_dict_place_version">
+														<td>{{v.firstId}}</td>
+														<td>{{v.version}}</td>
+														<td>{{v.reviewVersion}}</td>
+													</tr>
+												</tbody>
+											</table>
+										</div>
+
+										<div class="layui-form">
+											<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+												<legend style="font-size: 18px;">活动奖励配置</legend>
+											</fieldset>
+											<!--<a>name_dict_task</a>-->
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<!--<td v-for="v in name_dict_task"><b>{{v}}</b></td>-->
+														<td>id</td>
+														<td>activityId</td>
+														<td>eventId</td>
+														<td>邀请人数数量</td>
+														<td>奖励配置<my-question post-title="格式为：{类型:数量,类型:数量}，比如：{1,100}，表示类型1的数量100"></td>
+														<td>ui排序</td>
+														<td>活动描述</td>
+														<td>奖励状态<my-question post-title="(1.启用，2.禁用)"></my-question></td>
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="v in data_dict_task">
+														<td>{{v.id}}</td>
+														<td>{{v.activityId}}</td>
+														<td>{{v.eventId}}</td>
+														<td>{{v.eventNum}}</td>
+														<td>{{v.reward}}</td>
+														<td>{{v.ui}}</td>
+														<td>{{v.name}}</td>
+														<td>{{v.status}}</td>
+													</tr>
+
+												</tbody>
+											</table>
+										</div>
+
+									
+							<div class="layui-form">
+								<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+												<legend style="font-size: 18px;">任务配置</legend>
+											</fieldset>
+											<!--<a>xxxx00001_s_quest</a>-->
+											<table class="layui-table">
+												<colgroup>
+													<col>
+													<col>
+													<col>
+													<col>
+												</colgroup>
+												<thead>
+													<tr>
+														<td><b>任务ID</b></td>
+														 <td><b>任务接取类型<my-question post-title="（1-不循环 2 每日循环 3次数循环 4每日次数循环5单日内链式）"></my-question></b></td>
+														 <td><b>任务名称</b></td> 
+														<td><b>任务类型</b></td>
+														 <td><b>局数限制</b></td>
+														<td><b>循环数量<my-question post-title="（针对循环任务有效）"></my-question></b></td>
+														<!--<td><b>是否实时发放</b></td>-->
+														<!-- <td><b>发放类型 <my-question post-title="1=全部发放，2=随机一件，3=自选一件"></my-question></b></td>-->
+														 <td><b>任务描述</b></td>
+														<td><b>任务奖励<my-question post-title="（1：sum|2：sum 的格式）"></my-question></b></td>
+														 <td><b>图标id</b></td>
+														 <!--<td><b>是否显示任务链</b></td> -->
+														<!-- <td><b>推广码</b></td> -->
+														 <td><b>任务接取类型<my-question post-title="(1-注册接取  2 等级  3 链式接取 7 日常链式)"></my-question></b></td>
+														 <td><b>任务接取条件值</b></td>
+														 <!--<td><b>分享标签<my-question post-title="1-允许分享，0-不允许分享"></my-question></b></td>-->
+														 <!--<td><b>分享奖励<my-question post-title="（1：sum|2：sum 的格式）"></my-question></b></td>-->
+														<!-- <td><b>分享标题</b></td>
+														 <td><b>分享描述</b></td> 
+														 <td><b>分享链接</b></td>-->
+													</tr>
+												</thead>
+												<tbody>
+													<tr v-for="sq in game_s_quests">
+														 
+														  <td>{{sq.id}}</td>
+														  <td>{{sq.type}}</td>
+														  <td>{{sq.questName}}</td>
+														  <td>{{sq.questType}}</td>
+														  <td>{{sq.condition1}}</td>
+														  <td>{{sq.awardAutoSend}}</td>
+														 <!-- <td>{{sq.awardType}}</td>-->
+														 <td>{{sq.desc}}</td>
+														  <td>{{sq.awardList}}</td>
+														  <td>{{sq.iconImg}}</td>
+														 <!-- <td>{{sq.showQustList}}</td>-->
+														 <!-- <td>{{sq.distCode}}</td>-->
+														  <td>{{sq.acceptType}}</td>
+														  <td>{{sq.acceptValue}}</td>
+														 <!-- <td>{{sq.shareTag}}</td>-->
+														  <!--<td>{{sq.shareAward}}</td>-->
+														  <!--<td>{{sq.shareTitle}}</td>
+														  <td>
+														  <button class="layui-btn" data-type="auto" @click="particularsShow(sq.shareDesc)">
+																 详情
+															</button>
+														  </td>
+														  <td>
+														  <button class="layui-btn" data-type="auto" @click="particularsShow(sq.shareLink)">
+																 详情
+															</button>
+														  </td>-->
+													</tr>
+
+												</tbody>
+											</table>
+										</div>
+
+						
+						</div>
+						<!-- activity config   -->
+						<div class="layui-tab-item">
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">活动服配置信息</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+
+								<tbody>
+									<tr>
+										<td><b>服务器名称</b></td>
+										<td>活动服</td>
+									</tr>
+									<tr>
+										<td><b>服务器IP</b></td>
+										<td>121.196.217.142</td>
+									</tr>
+									<tr>
+										<td><b>运行状态</b></td>
+										<td>
+											<!--<span style="color: red;" >异常</span> <span style="color: black;" >关闭</span>-->
+										<span style="color: green;" v-if="activityConfig.status=='ok'">正常 </span>
+											<span style="color: red;" v-else>关闭</span>
+										</td>
+									</tr>
+								<!--	<tr>
+										<td><b>所属目录</b></td>
+										<td>/data/game/an_hui_55/dfz_xin_huai_bei_ma_jiang/current/game_server/Deploydir/dsqp</td>
+									<tr>-->
+									<tr>
+										<td><b>操作</b></td>
+										<td><button class="layui-btn layui-btn-sm layui-btn-normal" @click="onActivity" >刷新配置</button></td>
+									<!--<tr>
+										<td><b>所属版本</b></td>
+										<td>2.6.7.0</td>
+									</tr>-->
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">活动服是否开启配置 
+								<a   class="layui-icon" style="color: red; font-size: 20px;" v-if="checkConfig(1)!=''">&#x1007;</a>
+								<a  class="layui-icon" style="color: green; font-size: 20px;" v-else>&#xe616;</a>
+								<span v-if="checkConfig(1)!=''">
+									{{checkConfig(1)}}
+								</span>
+									
+								</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line"  >
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr>
+										<td><b>productId</b></td>
+										<!--<td><b>sKey</b></td>-->
+										<td><b>是否开启</b></td>
+										<td><b>备注</b></td>
+									</tr>
+									<tr v-for="ap in activityConfig.actConfigs" >
+										<td><b>{{ap.gameId}}</b></td>
+										<!--<td><b>{{ap.sKey}}</b></td>-->
+										<td><b>{{ap.sValue}}</b></td>
+										<td><b>{{ap.sDesc}}</b></td>
+									</tr>
+									
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">主游戏服务器配置列表
+								<a   class="layui-icon" style="color: red; font-size: 20px;" v-if="checkConfig(2)!=''">&#x1007;</a>
+								<a  class="layui-icon" style="color: green; font-size: 20px;" v-else>&#xe616;</a>
+								<span v-if="checkConfig(2)!=''" style="color: red;" >
+									{{checkConfig(2)}}
+								</span>
+									
+								</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line"  >
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr>
+										<td><b>id</b></td>
+										<td><b>productId</b></td>
+										<td><b>游戏服IP</b></td>
+										<td><b>游戏服web端口</b></td>
+										<td><b>状态(状态，1：启用，2：未启用)</b></td>
+									</tr>
+									<tr v-for="ap in activityConfig.actGameServers" >
+										<td><b>{{ap.id}}</b></td>
+										<td><b>{{ap.gameId}}</b></td>
+										<td><b>{{ap.host}}</b></td>
+										<td><b>{{ap.port}}</b></td>
+										<td><b>{{ap.status}}</b></td>
+									</tr>
+									
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">奖励概率
+								<span class="layui-icon" style="color: red; font-size: 20px;" v-if="checkConfig(3)">&#x1007;</span>
+								<span class="layui-icon" style="color: green; font-size: 20px;" v-else>&#xe616;</span>
+								</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr >
+										<td><b>id</b></td>
+										<td><b>产出概率</b></td>
+										<td><b>备注</b></td>
+									</tr>
+									<template v-if="activityConfig!=''">								
+									<tr v-for="ar in activityConfig.actRewards" >
+										<td><b>{{ar.id}}</b></td>
+										<td><b>{{ar.reward}}</b></td>
+										<td><b>{{ar.name}}</b></td>
+									</tr>
+									</template>	
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">奖励兑换配置
+								<span class="layui-icon" style="color: red; font-size: 20px;" v-if="checkConfig(4)">&#x1007;</span>
+								<span class="layui-icon" style="color: green; font-size: 20px;" v-else>&#xe616;</span>
+								</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr >
+									<td><b>id</b></td>
+								    <td><b>productId</b></td>
+								    <td><b>商品名称</b></td>
+								    <td><b>类型<a class="layui-icon" style="color: red;" title="（1 钻石区 2 兑换券区）" >&#xe607;</a></b></td>
+								    <td><b>概率|数量</b></td>
+								    <td><b>类型|数量</b></td>
+								    <td><b>界面排序</b></td>
+								    <td><b>商品图片url</b></td>
+								    <td><b>是否热卖 <a class="layui-icon" style="color: red;" title="（0否 1是）" >&#xe607;</a></b></td>
+								    <td><b>状态<a class="layui-icon" style="color: red;" title="（1上架 0下架）" >&#xe607;</a></b></td>
+								    <td><b>已经售出的数量</b></td>
+								    <td><b>商品总数</b></td>
+								    <td><b>限制类型  <a class="layui-icon" style="color: red;" title="（空/0 不限制 1天 2周 3月 4永久 5时间限制limitNum为结束时刻）" >&#xe607;</a></b></td>
+								    <td><b>限制数量</b></td>
+									</tr>
+									<template v-if="activityConfig!=''">								
+									<tr v-for="am in activityConfig.actMalls" >
+										<td><b>{{am.id}}</b></td>
+									    <td><b>{{am.gameId}}</b></td>
+									    <td><b>{{am.name}}</b></td>
+									    <td><b>{{am.type}}</b></td>
+									    <td><b>{{am.item}}</b></td>
+									    <td><b>{{am.price}}</b></td>
+									    <td><b>{{am.ui}}</b></td>
+									    <td><b>{{am.image}}</b></td>
+									    <td><b>{{am.isHot}}</b></td>
+									    <td><b>{{am.status}}</b></td>
+									    <td><b>{{am.amount}}</b></td>
+									    <td><b>{{am.total}}</b></td>
+									    <td><b>{{am.limitType}}</b></td>
+									    <td><b>{{am.limitNum}}</b></td>
+									</tr>
+									</template>	
+								</tbody>
+							</table>
+						</div>
+						<!-- club config -->
+						<div class="layui-tab-item">
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 14px;">俱乐部配置信息</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+
+								<tbody>
+									<tr>
+										<td><b>服务器名称</b></td>
+										<td>俱乐部</td>
+									</tr>
+									<tr>
+										<td><b>服务器IP</b></td>
+										<td>121.196.217.142</td>
+									</tr>
+									<!--<tr>
+										<td><b>运行状态</b></td>
+										<td>
+										<span style="color: green;" v-if="shoppingConfig.status=='ok'">正常 </span>
+											<span style="color: red;" v-else>关闭</span>
+										</td>
+									</tr>
+									<tr>
+										<td><b>所属目录</b></td>
+										<td>/data/game/an_hui_55/dfz_xin_huai_bei_ma_jiang/current/game_server/Deploydir/dsqp</td>
+									<tr>
+										<td><b>所属版本</b></td>
+										<td>2.6.7.0</td>
+									</tr>-->
+								</tbody>
+							</table>
+							
+							<!--<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 14px;">俱乐部配置</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line"  >
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr>
+										<td><b>gameId</b></td>
+										<td><b>refreshDay</b></td>
+										<td><b>award</b></td>
+										<td><b>expireDay</b></td>
+									</tr>
+									<tr v-for="ap in clubConfig.dictFormals" >
+										<td><b>{{ap.gameId}}</b></td>
+										<td><b>{{ap.refreshDay}}</b></td>
+										<td><b>{{ap.award}}</b></td>
+										<td><b>{{ap.expireDay}}</b></td>
+									</tr>
+									</template>	
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 14px;">俱乐部货物</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line"  >
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr>
+										<td><b>gameId</b></td>
+										<td><b>nonCashDiscount</b></td>
+										<td><b>goodName</b></td>
+										<td><b>giftNum</b></td>
+										<td><b>remark</b></td>
+									</tr>
+									<tr v-for="ap in clubConfig.dictGoodPrices" >
+										<td><b>{{ap.gameId}}</b></td>
+										<td><b>{{ap.nonCashDiscount}}</b></td>
+										<td><b>{{ap.goodName}}</b></td>
+										<td><b>{{ap.giftNum}}</b></td>
+										<td><b>{{ap.remark}}</b></td>
+									</tr>
+									</template>	
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 14px;">dictLevelups</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr >
+										<td><b>totalPay</b></td>
+										<td><b>isEnable</b></td>
+										<td><b>levelUpType</b></td>
+									</tr>
+									<template v-if="clubConfig!=''">								
+									<tr v-for="ar in clubConfig.dictLevelups" >
+										<td><b>{{ar.totalPay}}</b></td>
+										<td><b>{{ar.isEnable}}</b></td>
+										<td><b>{{ar.levelUpType}}</b></td>
+									</tr>
+									</template>	
+								</tbody>
+							</table>
+							-->
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">俱乐部配置游戏服列表
+									<span class="layui-icon" style="color: red; font-size: 20px;" v-if="checkConfig(5)">&#x1007;</span>
+								<span class="layui-icon" style="color: green; font-size: 20px;" v-else>&#xe616;</span>
+								</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr >
+										 <td><b>id</b></td>
+									    <td><b>productId</b></td>
+									    <td><b>数据库名前缀</b></td>
+									    <td><b>数据库地址</b></td>
+									    <td><b>账号</b></td>
+									    <td><b>密码</b></td>
+									    <td><b>数据库地址</b></td>
+									    <td><b>账号</b></td>
+									    <td><b>密码</b></td>
+									    <td><b>游戏服IP</b></td>
+									    <td><b>游戏服web端口</b></td>
+									    <!--<td><b>itemId</b></td>-->
+									    <td><b>是否开启<a class="layui-icon" style="color: red;" title="（0否 1是）" >&#xe607;</a><td><b>
+									</tr>
+									<template v-if="clubConfig!=''">								
+									<tr v-for="am in clubConfig.dictGameDbs" >
+										 <td><b>{{am.id}}</b></td>
+									    <td><b>{{am.gameId}}</b></td>
+									    <td><b>{{am.dbNamePrefix}}</b></td>
+									    <td><b>{{am.dbUrl}}</b></td>
+									    <td><b>{{am.dbUser}}</b></td>
+									    <td><b>{{am.dbPass}}</b></td>
+									    <td><b>{{am.dbUrlRead}}</b></td>
+									    <td><b>{{am.dbUserRead}}</b></td>
+									    <td><b>{{am.dbPassRead}}</b></td>
+									    <td><b>{{am.webDomain}}</b></td>
+									    <td><b>{{am.webPort}}</b></td>
+									   <!-- <td><b>{{am.itemId}}</b></td>-->
+									    <td><b>{{am.isEnable}}</b></td>
+									</tr>
+									</template>	
+								</tbody>
+							</table>
+						</div>
+						<!-- shopping center config -->
+						<div class="layui-tab-item">
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">支付服状态信息</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+
+								<tbody>
+									<tr>
+										<td><b>服务器名称</b></td>
+										<td>支付服务器</td>
+									</tr>
+									<tr>
+										<td><b>服务器IP</b></td>
+										<td>120.78.199.18</td>
+									</tr>
+									<tr>
+										<td><b>运行状态</b></td>
+										<td><span style="color: green;">正常</span>
+											<!--<span style="color: red;" >异常</span> <span style="color: black;" >关闭</span>--></td>
+									</tr>
+									<!--<tr>
+										<td><b>所属目录</b></td>
+										<td>/data/game/an_hui_55/dfz_xin_huai_bei_ma_jiang/current/game_server/Deploydir/dsqp</td>
+									</tr>
+									<tr>
+										<td><b>所属版本</b></td>
+										<td>2.6.7.0</td>
+									</tr>-->
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">苹果支付订单配置信息
+									<span class="layui-icon" style="color: red; font-size: 20px;" v-if="checkConfig(6)">&#x1007;</span>
+								<span class="layui-icon" style="color: green; font-size: 20px;" v-else>&#xe616;</span>
+								</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr >
+										<td v-for="v in s_app_store" ><b>{{v}}</b></td>
+									</tr>
+									<template v-if="shoppingConfig!=''">								
+									<tr v-for="ap in shoppingConfig.appStores" >
+										<td><b>{{ap.id}}</b></td>
+										<td><b>{{ap.productId}}</b></td>
+										<td><b>{{ap.payWay}}</b></td>
+										<td><b>{{ap.sortId}}</b></td>
+										<td><b>{{ap.wxPay}}</b></td>
+										<td><b>{{ap.applePay}}</b></td>
+										<td><b>{{ap.aliPay}}</b></td>
+										<td><b>{{ap.appleChannelCode}}</b></td>
+										<td><b>{{ap.sortId}}</b></td>
+									</tr>
+									</template>	
+								</tbody>
+							</table>
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 18px;">第三方支付配置信息
+									<span class="layui-icon" style="color: red; font-size: 20px;" v-if="checkConfig(7)">&#x1007;</span>
+								<span class="layui-icon" style="color: green; font-size: 20px;" v-else>&#xe616;</span>
+								</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line"  >
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+								<template v-if="shoppingConfig.payConfigs!=null">	
+									<tr v-for="(v,k) in shoppingConfig.payConfigs[0]" >
+										
+										<td ><b>{{k | shoppingFiltes}}</b></td>
+										
+										<template v-if="k==='aliPayPrivatekey'|| k==='aliPayPublickey' ">
+										 	<td >
+										 		<button class="layui-btn"   data-type="auto" @click="shoppIsShow(k)">
+												  <!--<i class="layui-icon">&#xe608;</i>--> 预览
+												</button>
+										 	</td>
+										</template>
+										<template v-else>
+										  	<td ><b>{{v}}</b></td>
+										</template>
+									</tr>
+									<!--<tr v-for="ap in shoppingConfig.payConfigs" >
+										<td><b>{{ap.productId}}</b></td>
+										<td><b>{{ap.productName}}</b></td>
+										<td><b>{{ap.body}}</b></td>
+										<td><b>{{ap.applyURL}}</b></td>
+										<td><b>{{ap.spBillCreateIP}}</b></td>
+										<td><b>{{ap.wxTradeType}}</b></td>
+										<td><b>{{ap.wxAPPId}}</b></td>
+										<td><b>{{ap.wxMchId}}</b></td>
+										<td><b>{{ap.wxMchKey}}</b></td>
+										<td><b>{{ap.wxCallBack}}</b></td>
+										<td><b>{{ap.gameWebURL}}</b></td>
+										<td><b>{{ap.alipayURL}}</b></td>
+										<td><b>{{ap.alipayback}}</b></td>
+										<td><b>{{ap.aliPayAPPId}}</b></td>
+										<td><b>{{ap.aliPayPublickey}}</b></td>
+										<td><b>{{ap.aliPayPrivatekey}}</b></td>
+										<td><b @click="show" ></b>
+											<button data-method="offset" data-type="auto" class="layui-btn layui-btn-normal">居中弹出</button>
+										</td>
+									</tr>-->
+									</template>	
+								</tbody>
+							</table>
+						</div>
+						<!-- php config -->
+						<div class="layui-tab-item">
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 14px;">PHP服配置信息(暂未开放，敬请期待)</legend>
+							</fieldset>
+						<!--	<table class="layui-table" lay-skin="line">
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+
+								<tbody>
+									<tr>
+										<td><b>服务器名称</b></td>
+										<td>PHP</td>
+									</tr>
+									<tr>
+										<td><b>服务器IP</b></td>
+										<td>120.78.199.18</td>
+									</tr>
+									<tr>
+										<td><b>运行状态</b></td>
+										<td><span style="color: green;">正常</span>
+											
+									</tr>
+									<tr>
+										<td><b>所属目录</b></td>
+										<td>/data/game/an_hui_55/dfz_xin_huai_bei_ma_jiang/current/game_server/Deploydir/dsqp</td>
+									<tr>
+										<td><b>所属版本</b></td>
+										<td>2.6.7.0</td>
+									</tr>
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 14px;">PHP数据库配置</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line"  >
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr>
+										<td><b>gameId</b></td>
+										<td><b>dbName</b></td>
+										<td><b>host</b></td>
+										<td><b>user</b></td>
+										<td><b>pwd</b></td>
+									</tr>
+									<tr v-for="ap in phpConfig.sadDatabases" >
+										<td><b>{{ap.gameId}}</b></td>
+										<td><b>{{ap.dbName}}</b></td>
+										<td><b>{{ap.host}}</b></td>
+										<td><b>{{ap.user}}</b></td>
+										<td><b>{{ap.pwd}}</b></td>
+									</tr>
+								</tbody>
+							</table>
+							
+							<fieldset class="layui-elem-field layui-field-title" style="margin-top: 10px;">
+								<legend style="font-size: 14px;">PHP游戏配置</legend>
+							</fieldset>
+							<table class="layui-table" lay-skin="line"  >
+								<colgroup>
+									<col width="150">
+									<col width="150">
+									<col width="200">
+									<col>
+								</colgroup>
+								<tbody>
+									<tr>
+										<td><b>gameId</b></td>
+										<td><b>activityApiPort</b></td>
+										<td><b>gameName</b></td>
+										<td><b>androidPackageName</b></td>
+										<td><b>iosPackageName</b></td>
+									</tr>
+									<tr v-for="ap in phpConfig.sadGames" >
+										<td><b>{{ap.gameId}}</b></td>
+										<td><b>{{ap.activityApiPort}}</b></td>
+										<td><b>{{ap.gameName}}</b></td>
+										<td><b>{{ap.androidPackageName}}</b></td>
+										<td><b>{{ap.iosPackageName}}</b></td>
+									</tr>
+									</template>	
+								</tbody>
+							</table>
+							-->
+						</div>
+					</div>
+				</div>
+			</div>
+			</template>
+			<template v-else>
+				<center>
+					<h1>18测试服务器配置可视化</h1>
+				</center>
+			</template>
+			<div class="layui-footer">
+				<!-- 底部固定区域 -->
+				©18服务器版本
+			</div>
+		</div>
+		
+			
+		<script src="layui/layui.js"></script>
+		<script src="vue/dist/vue.js"></script>
+		<script src="vue/vue-resource.js"></script>
+		<script>
+			//窗体加载执行的方法  
+			window.onload = function() {
+				
+
+				
+				var URL = "http://120.78.199.18:33333/"
+				var vue= new Vue({
+					el: "#app-4",
+					data: {
+						serverTree: {},
+						isconfigshow: false,
+						serverName:"",
+						sconfig:{
+							productId:"",
+							gamePort:"",
+							resPort:"",
+							webPort:"",
+							activityURL:"",
+							shoppingCenterURL:"",
+							simpleProxy:"",
+							singlon:"",
+							appid:"",
+							userIdPrefix:"",
+							dbConfigMap:{
+								dictDataBaseConfig:{
+									dbNames:{
+										dictDbName:""
+									}
+								},
+								dataBaseConfig:{
+									dbNames:{
+										dbName:""
+									}
+								},
+								logDataBaseConfig:{
+									dbNames:{
+										logDbName:""
+									}
+								}
+							},
+							resConfig:{
+								recordURL:""
+							},
+							cardControlConfig:{
+								n:""
+							}
+						},
+						shoppingConfig:{},
+						data_dict_activity: {
+							id: "",
+							gameId: "",
+							title: "",
+							type: "",
+							content: "",
+							url: "",
+							ui: "",
+							share: "",
+							startTime: "",
+							endTime: "",
+							contentType: "",
+							user: "",
+							vanishTime: "",
+							status: ""
+						},
+						data_dict_config: {
+							sDesc: "",
+							productId: "",
+							isValid: "",
+							sValue: "",
+							sKey: ""
+						},
+						data_dict_place: {
+							ui: "",
+							placeId: "",
+							placeName: "",
+							placeLevel: "",
+							firstId: "",
+							parentPlaceId: ""
+						},
+						data_dict_place_config: {
+							dailyShare: "",
+							clubShare: "",
+							inviteShare: "",
+							marqueenTipMap: "",
+							placeId: "",
+							pyjRechargeTips: "",
+							popupAdEnable: "",
+							popupAdUrLs: "",
+							pyjAdvertisementUrLs: ""
+						},
+						data_dict_place_convert: {
+							firstID: "",
+							oldPlaceID: "",
+							newPlaceID: ""
+						},
+						data_dict_place_game: {
+							playerSum: "",
+							roomFeeType: "",
+							placeId: "",
+							description: "",
+							isNeedRoomFee: "",
+							initScore: "",
+							gameName: "",
+							roomFee: "",
+							difen: "",
+							roomFeeSum: "",
+							gameId: "",
+							roundSum: "",
+							voteWaitTime: "",
+							wanfa: "",
+							fanma: "",
+							expiredTime: "",
+							voteCdSecond: "",
+							roomShare: "",
+							wanfahuchi: ""
+						},
+						data_dict_place_version: {
+							reviewVersion: "",
+							version: "",
+							firstId: ""
+						},
+						data_dict_task: {
+							reward: "",
+							activityId: "",
+							eventId: "",
+							ui: "",
+							name: "",
+							id: "",
+							eventNum: "",
+							status: ""
+						},
+						game_s_quests:{},
+						s_app_store:["id","productId","支付渠道","商品Id","是否支持微信支付","是否支持apple支付","是否支持支付宝支付","apple渠道号","排序号"],
+						s_pay_config:["productId","产品名称","商品描述","apply验证rul","创建订单节点IP","微信支付类型 一般为APP","微信APPID","微信的商户ID","微信给的商户key","微信支付后的回调地址","游戏服的webURL","支付宝地址","支付宝回调地址","支付宝游戏APPid","支付宝公钥","支付宝私钥"],
+						name_dict_activity: ["id","productId", "活动标题", "系统类型", "活动内容(内容类型为1时保存文本，为2保存图片url)", "图片链接", "界面排序", "分享内容", "活动开始时间", "活动结束时间", "内容类型(1文字内容，2图片内容)", "活动大众预留字段", "消失时间", "活动状态(1开放0关闭)"],
+						name_dict_config: ["sDesc", "productId", "isValid", "sValue", "sKey"],
+						name_dict_place: ["ui 0为不显示，非0为显示", "placeID地方ID", "placeName地方名", "placeLevel地方级别", "firstID用于标识唯一游戏的ID", "parentPlaceID父地方ID"],
+						name_dict_place_config: ["placeID", "pyjRechargeTips充值提示", "pyjAdvertisementURLs广告", "recruitSetting招募配置", "popupAdURLs弹出广告", "popupAdEnable弹出广告开关", "marqueenTipMap跑马灯", "dailyShare每日分享", "inviteShare邀请好友分享", "clubShare俱乐部分享", "awardList任务奖励（1：sum|2：sum 的格式）"],
+						name_dict_place_convert: ["firstID", "oldPlaceID", "newPlaceID"],
+						name_dict_place_game: ["playerSum", "roomFeeType", "placeID", "description描述，用于注释", "isNeedRoomFee", "initScore", "gameName前端显示名", "roomFee", "difen", "roomFeeSum", "gameId", "roundSum", "voteWaitTime", "wanfa", "fanma", "expiredTime", "voteCdSecond", "roomShare", "wanfahuchi"],
+						name_dict_place_version: ["reviewVersion", "version", "firstID"],
+						name_dict_task: ["reward奖励，格式为：{类型:数量,类型:数量}，比如：{1,100}，表示类型1的数量100", "activityId活动id", "eventId事件id", "ui排序", "name名称", "id", "eventNum数量", "status奖励状态(1.启用，2.禁用)", ],
+						game_s_quest: ["Id任务ID", "type任务接取类型（1-不循环  2 每日循环 3次数循环 4每日次数循环5单日内链式）", "questName任务名称", "questType任务类型（16 类参加代码详细）", "preQuestId前置任务id（非必要 = 0）", "repeatSum循环数量（针对循环任务有效）", "condition1", "condition2", "condition3", "awardAutoSend是否实时发放", "awardTypetype1=全部发放，2=随机一件，3=自选一件", "awardList任务奖励（1：sum|2：sum 的格式）", "desc任务描述", "iconImg图标id", "recommend推荐类型（1 圈红闪烁  2 新手福利  3成长福利）", "showQustList是否显示任务链", "distCode推广码", "acceptType任务接取类型(1-注册接取  2 等级  3 链式接取 7 日常链式)", "acceptValue任务接取条件值", "shareTag分享标签，1-允许分享，0-不允许分享", "shareAward分享奖励（1：sum|2：sum 的格式）", "shareTitle分享标题", "shareDesc分享描述", "shareLink分享链接", "order显示排序", "citycode针对城市显示的任务，填城市编码，全部显示不填"],
+						activityConfig:{},
+						clubConfig:{},
+						phpConfig:{},
+						thisList:"",
+						pid:"",
+						timer:""
+					},
+					mounted() {
+						this.getCity()
+					},
+					components:{
+						'my-question':{
+							props: ['postTitle'],
+							template: '<a class="layui-icon" style="color: red;" :title="postTitle">&#xe607;</a>'			
+						}
+					},
+					methods: {
+						getCity: function() {
+							this.$http({
+								url: URL+"menu",
+								data: {}
+							}).then(function(res) {
+								this.serverTree = res.data;
+								layui.use('element', function() {
+									var element = layui.element;
+								});
+							});
+						},clickeTree:function(k,v){
+							this.serverName=v;
+							//jiang_su_34/dfz_jiang_su_da_quan/
+							var urls =URL +"game/"+k+"/"+v;
+							this.thisList=k+"/"+v+"/";
+							this.$http({
+								url: urls,
+								data: {}
+							}).then(function(re) {
+								this.sconfig=re.data;
+								if(this.sconfig.simpleProxy){
+									this.$http({
+										url: urls+"/?gateway=true",
+										data: {}
+									}).then(function(re) {
+										this.sconfig=re.data;
+										
+									});
+								}
+							});
+					
+						    //document.getElementById("main-tab").click();
+							this.$emit('main-tab');//把a标签的点击事件分发
+							//$("main-tab").addClass("layui-show");
+							//清除数据
+							this.hoppingConfig={};
+							this.activityConfig={};
+							this.clubConfig={};
+							this.timefunc();
+						},timefunc:function(){
+							//服务器心跳检测
+							clearInterval(this.timer);
+							this.timer= setInterval(function(){
+								var restartUrl=URL+"shell/"+vue.thisList+"status";
+								vue.$http({
+								  	url: restartUrl,
+								  	data: {}
+								  }).then(function(re){
+								  	//layer.msg(re.bodyText);com.dszy.game.service.launch.DSQPTestLauncher is running! (pid=2348)  
+								  	//com.dszy.game.service.launch.DSQPTestLauncher is not running
+								  	var stmp = re.bodyText;
+								    //var tmp=stmp.substring(stmp.length-12,stmp.length-1);
+								    //this.pid=tmp;
+								    var flsg=/^[0-9]$/;
+								    var pid = "";
+								    for(var str in stmp){
+								    	if(flsg.test(stmp[str])){
+								    		pid+=stmp[str];
+								    	}
+								    }
+								    console.log("游戏："+pid);
+								    if(pid!=""){
+								    	this.pid=pid;
+								    	if(this.sconfig.simpleProxy){ //判断是否是分布式
+								    		vue.$http({
+										  	url: restartUrl+"?gateway=true",
+										  	data: {}
+										  }).then(function(re){
+										  	//layer.msg(re.bodyText);com.dszy.game.service.launch.DSQPTestLauncher is running! (pid=2348)  
+										  	//com.dszy.game.service.launch.DSQPTestLauncher is not running
+										  	var stmp = re.bodyText;
+										    //var tmp=stmp.substring(stmp.length-12,stmp.length-1);
+										    //this.pid=tmp;
+										    var flsg=/^[0-9]$/;
+										    var pid = "";
+										    for(var str in stmp){
+										    	if(flsg.test(stmp[str])){
+										    		pid+=stmp[str];
+										    	}
+										    }
+										     console.log("网关："+pid);
+										    if(pid!=""){
+										    	this.pid=pid;
+										    }else{
+										    	this.pid="";
+										    }
+										  	
+										  });		
+								    }
+								    }else{
+								    	this.pid="";
+								    }
+								  	
+								  });
+							},2000);
+						},
+						onMainGameConfig:function() {
+							this.timefunc();
+						},
+						Sysinfo: function() {
+							this.isconfigshow=!this.isconfigshow;
+							//$("#result").css('display', 'block');
+							$("#result").html(syntaxHighlight(this.sconfig));
+						},
+						onMainDataConfig:function(){
+							clearInterval(this.timer);
+							var urlsdictdb = URL + "game/" + this.thisList + "dictdb";
+							this.$http({
+								url: urlsdictdb,
+								data: {}
+							}).then(function(redictdb) {
+								this.data_dict_activity = redictdb.data.dictActivities;
+								this.data_dict_config = redictdb.data.dictConfigs;
+								this.data_dict_place = redictdb.data.dictPlaces;
+								this.data_dict_place_config = redictdb.data.dictPlaceConfigs;
+								this.data_dict_place_convert = redictdb.data.dictPlaceConverts
+								this.data_dict_place_game = redictdb.data.dictPlaceGames;
+								this.data_dict_place_version = redictdb.data.dictPlaceVersions;
+								this.data_dict_task = redictdb.data.dictTasks;
+								//								alert(JSON.stringify(this.name_dict_activity));
+							});
+							urlsdictdb = URL + "game/" + this.thisList + "devdb";
+							this.$http({
+								url: urlsdictdb,
+								data: {}
+							}).then(function(devdb) {
+								this.game_s_quests = devdb.data.sQuests;
+								
+							});
+						},
+						onClickActivity:function(){
+							clearInterval(this.timer);
+							var activityApi = URL + "activity?productId=" + this.sconfig.productId;
+							this.$http({
+								url: activityApi,
+								data: {}
+							}).then(function(re) {
+								this.activityConfig = re.data;
+							});
+						},onClickClub:function(){
+							clearInterval(this.timer);
+							var clubApi = URL + "club?productId=" + this.sconfig.productId;
+							this.$http({
+								url: clubApi,
+								data: {}
+							}).then(function(re) {
+								this.clubConfig = re.data;
+							});
+						},onshoppingApi:function(){
+							//http://192.168.8.132:8080/shoppingcenter?productId=3422
+							var urls =URL +"shoppingcenter?productId="+this.sconfig.productId;
+							this.$http({
+								url: urls,
+								data: {}
+							}).then(function(re) {
+								this.shoppingConfig=re.data;
+							});
+							
+						},shoppIsShow:function(val){
+							var shopping= this.shoppingConfig.payConfigs[0];
+							layui.use('layer', function(){
+							  var layer = layui.layer;
+							  layer.open({
+								  title: '支付宝公钥'
+								  ,area: 'auto'
+								  ,maxWidth:"1000",
+								  content: shopping[val]
+								});  
+							});  
+						},particularsShow: function(val) {
+							layui.use('layer', function() {
+								var layer = layui.layer;
+								layer.open({
+									title: '详情',
+									area: 'auto',
+									maxWidth: "1000",
+									content: val
+								});
+							});
+						},onClickPhp:function(){
+							var phpApi = URL + "php?productId=" + this.sconfig.productId;
+							this.$http({
+								url: phpApi,
+								data: {}
+							}).then(function(re) {
+								this.phpConfig = re.data;
+							});
+						},onRestart:function(){
+							var restartUrl=URL+"shell/"+this.thisList+"restart";
+							var openUrl =URL+"tail/"+this.thisList+"out.log";
+							layui.use('layer', function(){
+							  var layer = layui.layer;
+							  layer.confirm('确定重启服务器吗？', {icon: 3, title:'提示'}, function(index){
+								 var wait = layer.load(3, {time: 10*1000});
+								window.open(openUrl); 
+								  vue.$http({
+								  	url: restartUrl,
+								  	data: {}
+								  }).then(function(re){
+								  	//layer.close(wait);
+								  	//alert(re.bodyText)
+								  	console.log(re.bodyText);
+								  	layer.msg("游戏服重启完成");
+								  	if(this.sconfig.simpleProxy){
+								  		 vue.$http({
+										  	url: restartUrl+"?gateway=true",
+										  	data: {}
+										  }).then(function(re){
+										  	//alert(re.bodyText)
+										  	console.log(re.bodyText);
+										  	layer.msg("网关重启完成");
+										  });
+								  		}
+								  	layer.close(wait);
+								  	layer.close(index);
+									});
+								  });
+								
+							});  
+							
+						},onStop:function(){
+							var restartUrl=URL+"shell/"+this.thisList+"stop";
+							var openUrl =URL+"tail/"+this.thisList+"out.log";
+							layui.use('layer', function(){
+							  var layer = layui.layer;
+								 layer.confirm('确定停止服务器吗？', {icon: 3, title:'提示'}, function(index){
+								 var wait = layer.load(3, {time: 10*1000});
+								 window.open(openUrl); 
+								  vue.$http({
+								  	url: restartUrl,
+								  	data: {}
+								  }).then(function(re){
+								  	layer.close(wait);
+								  	//alert(re.bodyText)
+								 
+								  	layer.msg("停止游戏服务器");
+								  		if(this.sconfig.simpleProxy){
+									  		vue.$http({
+											  	url: restartUrl,
+											  	data: {}
+											  }).then(function(re){
+											  	//alert(re.bodyText)
+											  	console.log(re.bodyText);
+											  	layer.msg("停止网关服务器");
+											  });
+								  		}
+								  });
+								  layer.close(wait);
+								  layer.close(index);
+								});
+							});  
+						},onVersion:function(){
+							var openUrl =URL+this.thisList+"readme";
+							var urls= "readme.html?url="+openUrl;
+							window.open(urls); 
+						},onOutlog:function(){
+							var openUrl =URL+"tail/"+this.thisList+"out.log?line=500";
+							window.open(openUrl); 
+						},onErrorlog:function(){
+							var openUrl =URL+"tail/"+this.thisList+"error.log?line=500";
+							window.open(openUrl);
+						},
+						onActivity:function(){
+							var activityUrl = "http://121.196.217.142:20001/api/config?act=reload";
+							layui.use('layer', function(){
+							  var layer = layui.layer;
+								 var wait = layer.load(3, {time: 10*1000});
+								  vue.$http({
+								  	url: activityUrl,
+								  	data: {}
+								  }).then(function(re){
+								  	layer.close(wait);
+								  	//alert(re.bodyText)
+								  	layer.msg(re.bodyText)
+								  });
+							});
+						},checkConfig:function(index){
+							
+							switch (index){
+								case 1:
+									//console.log(this.activityConfig.actConfigs)
+									if(this.activityConfig.actConfigs!=undefined){
+										if(this.activityConfig.actConfigs.length==1){
+											console.log(index)
+											return "";	
+										}else{
+											return "未在数据库中配置活动服开关！";
+										}
+										
+									}
+									
+									break;
+								case 2:
+									if(this.activityConfig.actGameServers!=undefined){
+										if(this.activityConfig.actGameServers.length==1){
+											if(this.activityConfig.actGameServers[0].port==this.sconfig.webPort){
+												console.log(index)
+												return "";	
+											}
+											return "web端口配置有误";
+										}	
+									}
+									break;
+								case 3:
+									if(this.activityConfig.actRewards!=undefined){
+										if(this.activityConfig.actRewards.length==3){
+											console.log(index)
+											return false;
+										}	
+									}
+									break;
+								case 4:
+									if(this.activityConfig.actMalls!=undefined){
+										if(this.activityConfig.actMalls.length==3){
+											console.log(index)
+											return false;
+										}	
+									}//clubConfig.dictGameDbs
+									break;
+								case 5:
+									if(this.clubConfig.dictGameDbs!=undefined){
+										if(this.clubConfig.dictGameDbs.length==1){
+											var dbname = this.sconfig.dbConfigMap.dataBaseConfig.dbNames.dbName;
+											var index = dbname.lastIndexOf("_");
+											dbname = dbname.substring(0,index);
+											if(this.clubConfig.dictGameDbs[0].dbPassRead==this.sconfig.dbConfigMap.dataBaseConfig.passwd&this.clubConfig.dictGameDbs[0].dbNamePrefix==dbname){
+												console.log(index);
+												return false;
+											}
+										}	
+									}
+									break;
+								case 6:
+									if(this.shoppingConfig.appStores!=undefined){
+										if(this.shoppingConfig.appStores.length==3){
+											console.log(index)
+											return false;
+										}	
+									}//clubConfig.dictGameDbs
+									break;
+								case 7:
+									if(this.shoppingConfig.payConfigs!=undefined){
+										if(this.shoppingConfig.payConfigs.length==1){
+											console.log(index)
+											return false;
+										}	
+									}//clubConfig.dictGameDbs
+									break;
+								default:
+									;
+							}
+							return true;
+							
+							
+							
+						}
+					},
+					filters: {
+						cityKv: (v) => {
+							var cityval = {
+								"he_nan_41": "河南麻将",
+								"dfz_he_nan_quan_ji": "地方组河南全集",
+								"he_nan_quan_ji": "中心组河南全集",
+								"jiang_su_34": "江苏麻将",
+								"dfz_jiang_su_da_quan": "地方组江苏大全",
+								"dfz_jiang_su_da_quan_qian_duan": "地方组江苏大全(停用)",
+								"jiang_su_da_quan": "中心组江苏大全",
+								"jiang_su_da_quan___": "中心组江苏大全U3D",
+								"room_jiang_su_da_quan": "江苏大全（停用）",
+								"guang_dong_44": "广东麻将",
+								"di_fang_zu_xiang_mu_guang_dong_da_quan": "地方组广东大全(停用)",
+								"dfz_guang_dong_da_quan":"地方组广东大全",
+								"guang_dong_da_quan_dou_di_zhu":"地方组广东斗地主",
+								"guang_dong_da_quan":"中心组广东大全",
+								"an_hui_55": "安徽麻将",
+								"an_hui_da_quan": "中心组安徽大全",
+								"an_hui_ma_jiang_jing_hua_ban": "中心组安徽精华版",
+								"an_hui_ma_jiang_quan_ji": "中心组安徽全集",
+								"an_hui_quan_ji": "中心组安徽（停用）",
+								"dfz_an_hui_da_quan": "地方组安徽大全",
+								"dfz_an_hui_ma_jiang_jing_hua_ban": "地方组安徽精华版",
+								"dfz_an_hui_ma_jiang_quan_ji": "地方组安徽全集",
+								"dfz_xin_an_hui_huai_bei": "地方组新淮北（停用）",
+								"dfz_xin_huai_bei_ma_jiang": "地方组新淮北",
+								"xin_huai_bei_ma_jiang": "中心组组新淮北"
+							};
+							var test = cityval[v]
+							return test;
+						},
+						shoppingFiltes: (v) => {
+								var shopping = {
+									"productId": "productId",
+									"productName": "产品名称",
+									"body": "商品描述",
+									"applyUrl": "apply验证rul",
+									"spBillCreateIp": "创建订单节点IP",
+									"wxTradeType": "微信支付类型 一般为APP",
+									"wxAppId": "微信APPID",
+									"wxMchId": "微信的商户ID",
+									"wxMchKey": "微信给的商户key",
+									"wxCallBack": "微信支付后的回调地址",
+									"gameWebUrl": "游戏服的webURL",
+									"alipayUrl": "支付宝地址",
+									"alipayback": "支付宝回调地址",
+									"aliPayAppId": "支付宝游戏APPid",
+									"aliPayPublickey": "支付宝公钥",
+									"aliPayPrivatekey": "支付宝私钥"
+								};
+							var test = shopping[v]
+							return test;
+					}
+				}
+			})
+
+				function syntaxHighlight(json) {
+					if(typeof json != 'string') {
+						json = JSON.stringify(json, undefined, 2);
+					}
+					json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+					return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+						var cls = 'number';
+						if(/^"/.test(match)) {
+							if(/:$/.test(match)) {
+								cls = 'key';
+							} else {
+								cls = 'string';
+							}
+						} else if(/true|false/.test(match)) {
+							cls = 'boolean';
+						} else if(/null/.test(match)) {
+							cls = 'null';
+						}
+						return '<span class="' + cls + '">' + match + '</span>';
+					});
+				}
+
+			};
+		</script>
+	</body>
+
+</html>
